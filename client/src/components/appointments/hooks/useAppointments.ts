@@ -87,7 +87,7 @@ export function useAppointments(): UseAppointments {
     [queryKeys.appointments, monthYear.year, monthYear.month],
     () => getAppointments(monthYear.year, monthYear.month),
     {
-      select: showAll ? undefined : handleSelect,
+      select: !showAll && handleSelect,
     },
   );
 

@@ -1,9 +1,10 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useQuery } from 'react-query';
 
 import type { Staff } from '../../../../../shared/types';
 import { axiosInstance } from '../../../axiosInstance';
 import { queryKeys } from '../../../react-query/constants';
+import { filterByTreatment } from '../utils';
 
 interface UseStaff {
   staff: Staff[];
@@ -18,9 +19,16 @@ async function getStaff(): Promise<Staff[]> {
 }
 
 export function useStaff(): UseStaff {
-  // for filtering staff by treatment
   const [filter, setFilter] = useState('all');
-  const { data: staff = [] } = useQuery(queryKeys.staff, getStaff);
+
+  const handleSelectCheckbox = useCallback(
+    (data: Array<Staff>) => filterByTreatment(data, filter),
+    [filter],
+  );
+
+  const { data: staff = [] } = useQuery(queryKeys.staff, getStaff, {
+    select: filter !== 'all' && handleSelectCheckbox,
+  });
 
   return { staff, filter, setFilter };
 }
