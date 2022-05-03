@@ -16,6 +16,11 @@ import { AppointmentDateMap } from '../types';
 import { getAvailableAppointments } from '../utils';
 import { getMonthYearDetails, getNewMonthYear, MonthYear } from './monthYear';
 
+const commonOptions = {
+  staleTime: 0,
+  cacheTime: 1000 * 60 * 5,
+};
+
 // for useQuery call
 async function getAppointments(
   year: string,
@@ -56,14 +61,9 @@ export function useAppointments(): UseAppointments {
   function updateMonthYear(monthIncrement: number): void {
     setMonthYear((prevData) => getNewMonthYear(prevData, monthIncrement));
   }
-  /** ****************** END 1: monthYear state ************************* */
-  /** ****************** START 2: filter appointments  ****************** */
-  // State and functions for filtering appointments to show all or only available
+
   const [showAll, setShowAll] = useState(false);
 
-  // We will need imported function getAvailableAppointments here
-  // We need the user to pass to getAvailableAppointments so we can show
-  //   appointments that the logged-in user has reserved (in white)
   const { user } = useUser();
 
   const handleSelect = useCallback(
@@ -71,23 +71,15 @@ export function useAppointments(): UseAppointments {
     [user],
   );
 
-  /** ****************** END 2: filter appointments  ******************** */
-  /** ****************** START 3: useQuery  ***************************** */
-  // useQuery call for appointments for the current monthYear
-
-  // TODO: update with useQuery!
-  // Notes:
-  //    1. appointments is an AppointmentDateMap (object with days of month
-  //       as properties, and arrays of appointments for that day as values)
-  //
-  //    2. The getAppointments query function needs monthYear.year and
-  //       monthYear.month
-
   const { data: appointments = {} } = useQuery(
     [queryKeys.appointments, monthYear.year, monthYear.month],
     () => getAppointments(monthYear.year, monthYear.month),
     {
+      ...commonOptions,
       select: !showAll && handleSelect,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
     },
   );
 
@@ -99,6 +91,9 @@ export function useAppointments(): UseAppointments {
     queryClient.prefetchQuery(
       [queryKeys.appointments, yearOfNextMonth, nextMonth],
       () => getAppointments(yearOfNextMonth, nextMonth),
+      {
+        ...commonOptions,
+      },
     );
   }, [queryClient, nextMonth, yearOfNextMonth]);
   /** ****************** END 3: useQuery  ******************************* */
